@@ -2,15 +2,22 @@ INCLUDE Irvine32.inc
 
 .data
 ; 1 = ship, 0 = empty
-board DWORD   0,0,0,
+
+board DWORD 9 dup(?)
+
+board1 DWORD  0,0,0,
               1,1,1,
               0,0,0
 
-board1 DWORD  0,1,0,
+board2 DWORD  0,1,0,
               0,1,0,
               0,1,0
 rows = 3
 cols = 3
+
+myBoard DWORD -1,-1,-1,
+              -1,-1,-1,
+              -1,-1,-1
 
 welcomeMessage byte "Welcome to the battleship game",0Ah,0Dh,
                     "This is an ambitious game made by:",0Ah,0Dh,
@@ -24,14 +31,21 @@ winning   byte "You have found all ships and won",0
 losing    byte "You lost, better luck next time",0
 matchEnd  byte "The match is over",0
 duplicateInput byte "You have already tried this block",0
+space byte " ",0
+
+startingGame byte "Starting game...",0
+openingMessage  byte "Would you like to play against loadout 1?",0
 
 noOfFailures dword 0
 noOfCorrectHits dword 0
 noOfTries dword 0
 locationsAlreadyHit dword 9 dup(?)
 
+
 .code
 main PROC
+    call openingWindowToPromptUser
+
     mov edx, offset welcomeMessage
     call writeString
 
@@ -50,7 +64,7 @@ main PROC
         call ReadInt
         mov ecx, eax      ; col in ECX
 
-
+        ;Also fix outofbound code
 
         ; --- Compute index = (row * cols + col) * 4 ---
         mov eax, ebx
@@ -71,7 +85,7 @@ main PROC
         mov eax, [esi]
 
         ; --- Check value ---
-
+        call printBoardSoFar
         cmp eax, 1
         je hit
         cmp eax, 0
@@ -102,14 +116,14 @@ miss:
 
 
 lost:
-    call clrscr
+    ;call clrscr
     mov ebx, offset matchEnd
     mov edx, OFFSET losing
     call msgBox
     exit
 
 won:
-    call clrscr
+    ;call clrscr
     mov ebx, offset matchEnd
     mov edx, OFFSET winning
     call msgBox
@@ -143,14 +157,65 @@ manageOffset proc
 manageOffset endp
 
 addOffset proc
+    push eax
     mov ebx, noOfTries
     mov esi, offset locationsAlreadyHit
     imul ebx, 4
     add esi, ebx
     mov dword ptr[esi], eax
 
+    mov esi, offset myBoard
+    add esi, eax
+    mov dword ptr[esi], 0
+    pop eax
     ret
 addOffset endp
+
+printBoardSoFar proc
+    push eax
+    mov ecx, 3
+    mov esi, offset myBoard
+    mov edx, offset space
+    
+    outerLoop:
+        mov ebx, ecx
+        mov ecx, 3
+        innerLoop:
+            mov eax, dword ptr[esi]
+            add esi, 4
+            call WriteInt
+            call WriteString
+        loop innerLoop
+        call crlf
+        mov ecx, ebx
+    loop outerLoop
+
+    pop eax
+    ret
+printBoardSoFar endp
+
+openingWindowToPromptUser proc
+    mov edi, offset board
+    mov ecx, 9
+    
+    mov ebx, offset startingGame
+    mov edx, offset openingMessage
+
+    call MsgBoxAsk
+    cmp eax, 6                  ;message box returns 6 in eax if yes and 7 if no
+    je choosingTheBoard
+    cmp eax, 7
+    mov esi, offset board2
+    jmp getOut
+    
+    jmp getOut
+    choosingTheBoard:
+    mov esi, offset board1
+    
+    getOut:
+    rep movsd
+    ret
+openingWindowToPromptUser endp
 
 ; Coloring section
 redBG proc
