@@ -22,6 +22,7 @@ hitMsg    byte "Hit!",0
 missMsg   byte "Miss!",0
 winning   byte "You have found all ships and won",0
 losing    byte "You lost, better luck next time",0
+matchEnd  byte "The match is over",0
 
 noOfFailures dword 0
 noOfCorrectHits dword 0
@@ -33,6 +34,7 @@ main PROC
 
     mov eax, 0
     L1:
+        call normalBG
         ; --- Ask for row ---
         mov edx, OFFSET promptRow
         call WriteString
@@ -64,39 +66,64 @@ main PROC
 
 
 hit:
+    call greenBG
     mov edx, OFFSET hitMsg
     call WriteString
+    call crlf
     inc noOfCorrectHits
     mov eax, noOfCorrectHits
     cmp eax, 3
-    jae successfullyDone
-    call crlf
+    jae won
     jmp L1
 
 miss:
+    call redBG
+    mov edx, OFFSET missMsg
+    call WriteString
+    call crlf
     inc noOfFailures
     mov eax, noOfFailures
     cmp eax, 5
     jae lost
-    mov edx, OFFSET missMsg
-    call WriteString
-    call crlf
     jmp L1
 
 
 lost:
-
+    call clrscr
+    mov ebx, offset matchEnd
     mov edx, OFFSET losing
-    call WriteString
-    call Crlf
+    call msgBox
     exit
 
-successfullyDone:
+won:
+    call clrscr
+    mov ebx, offset matchEnd
     mov edx, OFFSET winning
-    call WriteString
+    call msgBox
     exit
 
 main ENDP
+
+
+; Coloring section
+redBG proc
+    mov eax, yellow + red*16
+    call setTextColor 
+    ret
+redBG endp
+
+normalBG proc
+    mov eax, white + black*16
+    call setTextColor
+    ret
+normalBG endp
+
+greenBG proc
+    mov eax, white + green*16
+    call setTextColor
+    ret
+greenBG endp
+
 END main
 
 
