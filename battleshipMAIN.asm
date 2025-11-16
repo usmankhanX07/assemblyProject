@@ -23,9 +23,12 @@ missMsg   byte "Miss!",0
 winning   byte "You have found all ships and won",0
 losing    byte "You lost, better luck next time",0
 matchEnd  byte "The match is over",0
+duplicateInput byte "You have already tried this block",0
 
 noOfFailures dword 0
 noOfCorrectHits dword 0
+noOfTries dword 0
+locationsAlreadyHit dword 9 dup(?)
 
 .code
 main PROC
@@ -47,11 +50,20 @@ main PROC
         call ReadInt
         mov ecx, eax      ; col in ECX
 
+
+
         ; --- Compute index = (row * cols + col) * 4 ---
         mov eax, ebx
         imul eax, cols
         add eax, ecx
-        imul eax, TYPE DWORD
+        imul eax, type dword
+
+        ; --- Check if value already hit ---
+        call addOffset
+        call manageOffset       ; this function causes edx to be 1 when duplicate inputs are found
+        inc noOfTries
+        cmp edx, 1
+        je l1
 
         ; --- Access board[row][col] ---
         mov esi, OFFSET board
@@ -59,6 +71,7 @@ main PROC
         mov eax, [esi]
 
         ; --- Check value ---
+
         cmp eax, 1
         je hit
         cmp eax, 0
@@ -104,6 +117,40 @@ won:
 
 main ENDP
 
+manageOffset proc
+    ; eax contains the current offset
+    mov ecx, noOfTries
+    mov esi, offset locationsAlreadyHit
+    mov edx, 0
+    cmp ecx, 0
+    je endFunc
+
+    checkLoop:
+        cmp [esi], eax
+        je duplicateFound
+        add esi, 4
+    loop checkLoop
+    jmp endFunc
+
+    duplicateFound:
+    mov edx, offset duplicateInput
+    call WriteString
+    call crlf
+    mov edx, 1
+    
+    endFunc:
+    ret
+manageOffset endp
+
+addOffset proc
+    mov ebx, noOfTries
+    mov esi, offset locationsAlreadyHit
+    imul ebx, 4
+    add esi, ebx
+    mov dword ptr[esi], eax
+
+    ret
+addOffset endp
 
 ; Coloring section
 redBG proc
