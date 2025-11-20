@@ -15,9 +15,9 @@ board2 DWORD  0,1,0,
 rows = 3
 cols = 3
 
-myBoard DWORD -1,-1,-1,
-              -1,-1,-1,
-              -1,-1,-1
+myBoard DWORD 0,0,0,
+              0,0,0,
+              0,0,0
 
 welcomeMessage byte "Welcome to the battleship game",0Ah,0Dh,
                     "This is an ambitious game made by:",0Ah,0Dh,
@@ -39,6 +39,7 @@ openingMessage  byte "Would you like to play against loadout 1?",0
 noOfFailures dword 0
 noOfCorrectHits dword 0
 noOfTries dword 0
+
 locationsAlreadyHit dword 9 dup(?)
 
 
@@ -64,7 +65,7 @@ main PROC
         call ReadInt
         mov ecx, eax      ; col in ECX
 
-        ;Also fix outofbound code
+        ;Also fix outofbound code, input readString and show their name.
 
         ; --- Compute index = (row * cols + col) * 4 ---
         mov eax, ebx
@@ -158,15 +159,31 @@ manageOffset endp
 
 addOffset proc
     push eax
+    push eax
     mov ebx, noOfTries
     mov esi, offset locationsAlreadyHit
     imul ebx, 4
     add esi, ebx
     mov dword ptr[esi], eax
 
+    mov esi, OFFSET board
+    add esi, eax
+    mov eax, [esi]
+    cmp eax, 1
+    je moveOneToPrintedArray
+    pop eax
     mov esi, offset myBoard
     add esi, eax
-    mov dword ptr[esi], 0
+    mov dword ptr[esi], -1
+    jmp toTheEndOfAddOffset
+
+    moveOneToPrintedArray:
+    pop eax
+    mov esi, offset myBoard
+    add esi, eax
+    mov dword ptr[esi], 1
+
+    toTheEndOfAddOffset:
     pop eax
     ret
 addOffset endp
@@ -237,5 +254,3 @@ greenBG proc
 greenBG endp
 
 END main
-
-
