@@ -3,28 +3,35 @@ INCLUDE Irvine32.inc
 .data
 ; 1 = ship, 0 = empty
 
-board DWORD 9 dup(?)
+board DWORD 25 dup(?)
 
-board1 DWORD  0,0,0,
-              1,1,1,
-              0,0,0
+board1 DWORD  0,0,0,0,1,
+              1,1,1,0,0,
+              1,0,0,1,1,
+              1,0,1,0,0,
+              0,0,0,0,1
 
-board2 DWORD  0,1,0,
-              0,1,0,
-              0,1,0
-rows = 3
-cols = 3
+board2 DWORD  0,0,0,1,1,
+              1,0,0,0,1,
+              1,0,0,0,1,
+              0,0,1,0,0,
+              1,0,1,0,1
 
-myBoard DWORD 0,0,0,
-              0,0,0,
-              0,0,0
+rows = 5
+cols = 5
+
+myBoard DWORD 0,0,0,0,0,
+              0,0,0,0,0,
+              0,0,0,0,0,
+              0,0,0,0,0,
+              0,0,0,0,0
 
 welcomeMessage byte "Welcome to the battleship game",0Ah,0Dh,
                     "This is an ambitious game made by:",0Ah,0Dh,
                     "Usman Khan 24K-3032, Aleem Abbas 24K-3070 & Abdul Hadi 24K-3018",0Ah,0Dh,0
 
-promptRow byte "Enter row (0-2): ",0
-promptCol byte "Enter col (0-2): ",0
+promptRow byte "Enter row (1-5): ",0
+promptCol byte "Enter col (1-5): ",0
 hitMsg    byte "Hit!",0
 missMsg   byte "Miss!",0
 winning   byte "You have found all ships and won",0
@@ -40,7 +47,7 @@ noOfFailures dword 0
 noOfCorrectHits dword 0
 noOfTries dword 0
 
-locationsAlreadyHit dword 9 dup(?)
+locationsAlreadyHit dword 25 dup(?)
 
 
 .code
@@ -57,12 +64,14 @@ main PROC
         mov edx, OFFSET promptRow
         call WriteString
         call ReadInt
+        dec eax
         mov ebx, eax      ; row in EBX
 
         ; --- Ask for col ---
         mov edx, OFFSET promptCol
         call WriteString
         call ReadInt
+        dec eax
         mov ecx, eax      ; col in ECX
 
         ;Also fix outofbound code, input readString and show their name.
@@ -100,7 +109,7 @@ hit:
     call crlf
     inc noOfCorrectHits
     mov eax, noOfCorrectHits
-    cmp eax, 3
+    cmp eax, 10         ; 5x5 has 10 ships located in various spots
     jae won
     jmp L1
 
@@ -111,7 +120,7 @@ miss:
     call crlf
     inc noOfFailures
     mov eax, noOfFailures
-    cmp eax, 5
+    cmp eax, 10
     jae lost
     jmp L1
 
@@ -190,17 +199,18 @@ addOffset endp
 
 printBoardSoFar proc
     push eax
-    mov ecx, 3
+    mov ecx, rows
     mov esi, offset myBoard
     mov edx, offset space
     
     outerLoop:
         mov ebx, ecx
-        mov ecx, 3
+        mov ecx, cols
         innerLoop:
             mov eax, dword ptr[esi]
             add esi, 4
             call WriteInt
+            call WriteString
             call WriteString
         loop innerLoop
         call crlf
@@ -213,7 +223,8 @@ printBoardSoFar endp
 
 openingWindowToPromptUser proc
     mov edi, offset board
-    mov ecx, 9
+    mov ecx, rows
+    imul ecx, cols
     
     mov ebx, offset startingGame
     mov edx, offset openingMessage
@@ -230,7 +241,7 @@ openingWindowToPromptUser proc
     mov esi, offset board1
     
     getOut:
-    rep movsd
+    rep movsd               ; using esi, edi to copy and choose that board
     ret
 openingWindowToPromptUser endp
 
